@@ -252,10 +252,10 @@ export function GanttChart({ books, selectedYear, zoom, onZoomChange, rowScale, 
             return (
               <div
                 key={i}
-                className={`text-xs py-2 px-1 text-center border-r overflow-hidden ${
+                className={`text-xs py-2 px-1 text-center border-r border-[var(--border)] overflow-hidden ${
                   m.isYearStart
-                    ? 'text-[var(--text-primary)] font-semibold border-[var(--accent)]/60'
-                    : 'text-[var(--text-secondary)] border-[var(--border)]'
+                    ? 'text-[var(--text-primary)] font-semibold border-l-2 border-l-[var(--accent)]'
+                    : 'text-[var(--text-secondary)]'
                 }`}
                 style={{ width: `${m.width}%`, minWidth: 0 }}
               >
@@ -272,10 +272,8 @@ export function GanttChart({ books, selectedYear, zoom, onZoomChange, rowScale, 
             {months.map((m, i) => (
               <div
                 key={i}
-                className={`flex-shrink-0 h-full border-r ${
-                  m.isYearStart
-                    ? 'border-[var(--accent)]/50 border-r-2'
-                    : 'border-[var(--border)]/30'
+                className={`flex-shrink-0 h-full border-r border-[var(--border)]/30 ${
+                  m.isYearStart ? 'border-l-2 border-l-[var(--accent)]' : ''
                 }`}
                 style={{ width: `${m.width}%` }}
               />
