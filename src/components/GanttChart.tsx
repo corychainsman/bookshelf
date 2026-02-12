@@ -311,7 +311,7 @@ export function GanttChart({ books, selectedYear, zoom, onZoomChange, rowScale, 
                   />
                 )}
                 <span
-                  className="absolute text-white truncate pointer-events-none"
+                  className="absolute text-white pointer-events-none"
                   style={{
                     fontWeight: 300,
                     fontSize: FONT_SIZE,
@@ -319,6 +319,9 @@ export function GanttChart({ books, selectedYear, zoom, onZoomChange, rowScale, 
                     transform: 'translateY(-50%)',
                     left: book.image_url && pixelWidth > THUMB_PX_MIN ? TITLE_LEFT_THUMB : TITLE_LEFT_NO_THUMB,
                     maxWidth: `calc(95% - ${book.image_url && pixelWidth > THUMB_PX_MIN ? TITLE_LEFT_THUMB : TITLE_LEFT_NO_THUMB}px)`,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   {book.full_title}
