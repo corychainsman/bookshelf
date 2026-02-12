@@ -125,11 +125,21 @@ export function GanttChart({ books, selectedYear, zoom, onZoomChange, rowScale, 
   // Keep refs for zoom/callback so event listeners don't go stale
   const zoomRef = useRef(zoom);
   const onZoomChangeRef = useRef(onZoomChange);
+  const lastZoomUpdate = useRef(0);
   useEffect(() => { zoomRef.current = zoom; }, [zoom]);
   useEffect(() => { onZoomChangeRef.current = onZoomChange; }, [onZoomChange]);
 
   const pinchDist = (t: TouchList) =>
     Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+
+  const applyZoom = (newZoom: number) => {
+    const clamped = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, newZoom));
+    const now = performance.now();
+    if (now - lastZoomUpdate.current < 16) return; // throttle to ~60fps
+    lastZoomUpdate.current = now;
+    zoomRef.current = clamped;
+    onZoomChangeRef.current(clamped);
+  };
 
   // All zoom gestures via native listeners so we can call preventDefault()
   useEffect(() => {
@@ -140,13 +150,13 @@ export function GanttChart({ books, selectedYear, zoom, onZoomChange, rowScale, 
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault();
         const factor = e.deltaY < 0 ? 1.1 : 0.9;
-        onZoomChangeRef.current(Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoomRef.current * factor)));
+        applyZoom(zoomRef.current * factor);
       }
     };
 
     const onTouchStart = (e: TouchEvent) => {
       if (e.touches.length === 2) {
-        e.preventDefault(); // kill browser pinch-zoom intent from the start (iOS)
+        e.preventDefault();
         lastPinchDist.current = pinchDist(e.touches);
       }
     };
@@ -156,9 +166,7 @@ export function GanttChart({ books, selectedYear, zoom, onZoomChange, rowScale, 
         e.preventDefault();
         const dist = pinchDist(e.touches);
         const delta = dist / lastPinchDist.current;
-        if (isFinite(delta) && delta > 0) {
-          onZoomChangeRef.current(Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoomRef.current * delta)));
-        }
+        if (isFinite(delta) && delta > 0) applyZoom(zoomRef.current * delta);
         lastPinchDist.current = dist;
       }
     };
