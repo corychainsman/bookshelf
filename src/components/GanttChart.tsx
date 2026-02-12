@@ -19,6 +19,7 @@ const MAX_ZOOM = 30;
 
 export function GanttChart({ books, selectedYear, zoom, onZoomChange, rowScale, onRowScaleChange, colorBy }: Props) {
   const [hoveredBook, setHoveredBook] = useState<Book | null>(null);
+  const [clipTitles, setClipTitles] = useState(false);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const lastPinchDist = useRef<number | null>(null);
@@ -233,6 +234,15 @@ export function GanttChart({ books, selectedYear, zoom, onZoomChange, rowScale, 
               className="text-xs px-2 py-1 rounded bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"
             >Reset</button>
           )}
+          <label className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)] cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={clipTitles}
+              onChange={e => setClipTitles(e.target.checked)}
+              className="accent-[var(--accent)]"
+            />
+            Clip titles
+          </label>
           <span className="text-xs text-[var(--text-secondary)] opacity-50 hidden sm:inline">· Pinch to zoom</span>
         </div>
       </div>
@@ -319,8 +329,8 @@ export function GanttChart({ books, selectedYear, zoom, onZoomChange, rowScale, 
                     transform: 'translateY(-50%)',
                     left: book.image_url && pixelWidth > THUMB_PX_MIN ? TITLE_LEFT_THUMB : TITLE_LEFT_NO_THUMB,
                     maxWidth: `calc(95% - ${book.image_url && pixelWidth > THUMB_PX_MIN ? TITLE_LEFT_THUMB : TITLE_LEFT_NO_THUMB}px)`,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
+                    overflow: clipTitles ? 'hidden' : 'visible',
+                    textOverflow: clipTitles ? 'ellipsis' : 'clip',
                     whiteSpace: 'nowrap',
                   }}
                 >
