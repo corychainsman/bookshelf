@@ -10,7 +10,7 @@ from pathlib import Path
 from datetime import date
 
 VAULT_DIR = Path("/home/clawdbot/obsidian/Default Vault/Bases/_base_data/Books I Have Read")
-OUT_FILE  = Path("/home/clawdbot/clawd/books-viz-app/dist/books.json")
+OUT_FILE  = Path("/home/clawdbot/clawd/books-viz-app/public/books.json")
 
 def extract_frontmatter(content: str) -> dict:
     if not content.startswith('---'):

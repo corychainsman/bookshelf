@@ -1,5 +1,4 @@
-import { Book, Filters } from './types';
-import { topicMap } from './topicMap';
+import type { Book, Filters } from './types';
 
 let cachedBooks: Book[] | null = null;
 
@@ -11,7 +10,7 @@ export async function loadBooks(): Promise<Book[]> {
     ...b,
     author: Array.isArray(b.author) ? b.author : b.author ? [b.author] : [],
     rating: b.rating != null ? Number(b.rating) : null,
-    topics: topicMap[b._filename] || ['Uncategorized'],
+    topics: Array.isArray(b.topics) && b.topics.length > 0 ? b.topics : ['Uncategorized'],
   }));
   return cachedBooks!;
 }

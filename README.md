@@ -71,17 +71,17 @@ Re-run this whenever you add or update a book note.
 
 ### 3. Topic assignment
 
-Topics aren't stored in the frontmatter — they're assigned via `src/topicMap.ts`, a plain object mapping filename → topic list:
+Topics are stored directly in the book's YAML frontmatter as a list:
 
-```ts
-export const topicMap: Record<string, string[]> = {
-  "A Brief History of Intelligence": ["Science", "Technology"],
-  "Sapiens": ["History", "Social Science"],
-  // ...
-};
+```yaml
+topics:
+  - Science
+  - Psychology
 ```
 
-If a book has no entry, it defaults to `["Uncategorized"]`. The canonical topic list and their colors live in `src/colors.ts` — edit those to add your own topics.
+`generate_books_json.py` picks them up automatically — no separate file needed. If a book has no `topics` field, it defaults to `["Uncategorized"]`.
+
+The canonical topic list and their colors live in `src/colors.ts` — edit that file to add your own topics.
 
 ### 4. Cover images
 
