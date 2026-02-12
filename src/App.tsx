@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import type { Book, Filters, ViewMode } from './types';
 import { loadBooks, getYears, getAllTopics, filterBooks } from './data';
 import { FilterBar } from './components/FilterBar';
@@ -63,25 +63,34 @@ export default function App() {
     });
   }, []);
 
-  // Sync all state → URL whenever anything changes
+  // Sync all state → URL, debounced to avoid exceeding Safari's replaceState
+  // rate limit (100 calls/30s). Rapid zoom would blow past it and throw SecurityError.
+  const urlSyncTimer = useRef<ReturnType<typeof setTimeout>>();
   useEffect(() => {
-    const params = new URLSearchParams();
-    if (view !== 'grid')            params.set('view', view);
-    if (filters.search)             params.set('search', filters.search);
-    if (filters.year !== 'all')     params.set('year', filters.year);
-    if (filters.format !== 'all')   params.set('format', filters.format);
-    if (filters.source !== 'all')   params.set('source', filters.source);
-    if (filters.ratingMin !== 0)    params.set('ratingMin', String(filters.ratingMin));
-    if (filters.ratingMax !== 10)   params.set('ratingMax', String(filters.ratingMax));
-    if (filters.topic !== 'all')    params.set('topic', filters.topic);
-    if (filters.sortBy !== 'date')  params.set('sortBy', filters.sortBy);
-    if (filters.sortDir !== 'desc') params.set('sortDir', filters.sortDir);
-    if (zoom !== 1)                 params.set('zoom', String(Math.round(zoom * 100) / 100));
-    if (rowScale !== 1)             params.set('scale', String(rowScale));
-    if (colorBy !== 'topic')        params.set('colorby', colorBy);
+    clearTimeout(urlSyncTimer.current);
+    urlSyncTimer.current = setTimeout(() => {
+      const params = new URLSearchParams();
+      if (view !== 'grid')            params.set('view', view);
+      if (filters.search)             params.set('search', filters.search);
+      if (filters.year !== 'all')     params.set('year', filters.year);
+      if (filters.format !== 'all')   params.set('format', filters.format);
+      if (filters.source !== 'all')   params.set('source', filters.source);
+      if (filters.ratingMin !== 0)    params.set('ratingMin', String(filters.ratingMin));
+      if (filters.ratingMax !== 10)   params.set('ratingMax', String(filters.ratingMax));
+      if (filters.topic !== 'all')    params.set('topic', filters.topic);
+      if (filters.sortBy !== 'date')  params.set('sortBy', filters.sortBy);
+      if (filters.sortDir !== 'desc') params.set('sortDir', filters.sortDir);
+      if (zoom !== 1)                 params.set('zoom', String(Math.round(zoom * 100) / 100));
+      if (rowScale !== 1)             params.set('scale', String(rowScale));
+      if (colorBy !== 'topic')        params.set('colorby', colorBy);
 
-    const qs = params.toString();
-    window.history.replaceState(null, '', qs ? `?${qs}` : window.location.pathname);
+      const qs = params.toString();
+      try {
+        window.history.replaceState(null, '', qs ? `?${qs}` : window.location.pathname);
+      } catch {
+        // Safari SecurityError if called too rapidly — safe to ignore, URL just won't update
+      }
+    }, 400);
   }, [view, filters, zoom, rowScale, colorBy]);
 
   // Reset zoom when year filter changes

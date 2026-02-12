@@ -182,6 +182,15 @@
     }
     setInterval(updateScale, 200);
     updateScale();
+    // Catch replaceState SecurityError (Safari rate limit)
+    const origReplace = history.replaceState.bind(history);
+    let replaceCount = 0;
+    history.replaceState = function(...args) {
+      replaceCount++;
+      try { origReplace(...args); }
+      catch(e) { log(`replaceState SecurityError after ${replaceCount} calls — THIS WAS THE BUG`, 'log-gesture'); }
+    };
+
     log('Test harness ready — try pinching!', 'log-info');
   </script>
 </body>
