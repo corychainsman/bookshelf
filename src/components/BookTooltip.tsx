@@ -45,6 +45,7 @@ export function BookTooltip({ book, x, y }: Props) {
         top,
         width: 300,
         color: 'var(--text-primary)',
+        pointerEvents: 'none',
       }}
     >
       <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4 shadow-2xl">
