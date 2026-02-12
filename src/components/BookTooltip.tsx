@@ -20,8 +20,12 @@ export function BookTooltip({ book, x, y }: Props) {
     return () => { try { el.hidePopover(); } catch {} };
   }, []);
 
-  const flipX = x > window.innerWidth  - 340;
-  const flipY = y > window.innerHeight - 320;
+  // Clamp to viewport with a safe margin
+  const PAD = 8;
+  const TIP_W = 316;  // 300px content + borders/shadow
+  const TIP_H = 340;  // generous height estimate
+  const left = Math.max(PAD, Math.min(x + 16, window.innerWidth  - TIP_W - PAD));
+  const top  = Math.max(PAD, Math.min(y + 16, window.innerHeight - TIP_H - PAD));
 
   return (
     <div
@@ -37,10 +41,8 @@ export function BookTooltip({ book, x, y }: Props) {
         border: 'none',
         background: 'transparent',
         overflow: 'visible',
-        // Position at cursor with edge-flip
-        left:      flipX ? x - 16 : x + 16,
-        top:       flipY ? y - 16 : y + 16,
-        transform: [flipX ? 'translateX(-100%)' : '', flipY ? 'translateY(-100%)' : ''].filter(Boolean).join(' ') || undefined,
+        left,
+        top,
         width: 300,
       }}
     >

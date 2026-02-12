@@ -145,15 +145,20 @@ export function GanttChart({ books, selectedYear, zoom, onZoomChange, rowScale, 
     };
 
     const onTouchStart = (e: TouchEvent) => {
-      if (e.touches.length === 2) lastPinchDist.current = pinchDist(e.touches);
+      if (e.touches.length === 2) {
+        e.preventDefault(); // kill browser pinch-zoom intent from the start (iOS)
+        lastPinchDist.current = pinchDist(e.touches);
+      }
     };
 
     const onTouchMove = (e: TouchEvent) => {
-      if (e.touches.length === 2 && lastPinchDist.current !== null) {
-        e.preventDefault(); // block browser page-zoom
+      if (e.touches.length === 2 && lastPinchDist.current !== null && lastPinchDist.current > 0) {
+        e.preventDefault();
         const dist = pinchDist(e.touches);
         const delta = dist / lastPinchDist.current;
-        onZoomChangeRef.current(Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoomRef.current * delta)));
+        if (isFinite(delta) && delta > 0) {
+          onZoomChangeRef.current(Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoomRef.current * delta)));
+        }
         lastPinchDist.current = dist;
       }
     };
@@ -161,8 +166,8 @@ export function GanttChart({ books, selectedYear, zoom, onZoomChange, rowScale, 
     const onTouchEnd = () => { lastPinchDist.current = null; };
 
     el.addEventListener('wheel',      onWheel,      { passive: false });
-    el.addEventListener('touchstart', onTouchStart, { passive: true  });
-    el.addEventListener('touchmove',  onTouchMove,  { passive: false }); // passive:false required for preventDefault
+    el.addEventListener('touchstart', onTouchStart, { passive: false }); // passive:false so preventDefault works
+    el.addEventListener('touchmove',  onTouchMove,  { passive: false });
     el.addEventListener('touchend',   onTouchEnd);
     return () => {
       el.removeEventListener('wheel',      onWheel);
