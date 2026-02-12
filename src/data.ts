@@ -5,7 +5,7 @@ let cachedBooks: Book[] | null = null;
 
 export async function loadBooks(): Promise<Book[]> {
   if (cachedBooks) return cachedBooks;
-  const res = await fetch('/books.json');
+  const res = await fetch(`${import.meta.env.BASE_URL}books.json`);
   const raw = await res.json();
   cachedBooks = raw.map((b: any) => ({
     ...b,
