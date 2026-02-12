@@ -50,7 +50,7 @@ export default function App() {
   });
   const [rowScale, setRowScale] = useState<number>(() => {
     const s = new URLSearchParams(window.location.search).get('scale');
-    return s ? Number(s) : 2;
+    return s ? Number(s) : 1;
   });
   const [colorBy, setColorBy] = useState<string>(() =>
     new URLSearchParams(window.location.search).get('colorby') || 'topic'
@@ -77,7 +77,7 @@ export default function App() {
     if (filters.sortBy !== 'date')  params.set('sortBy', filters.sortBy);
     if (filters.sortDir !== 'desc') params.set('sortDir', filters.sortDir);
     if (zoom !== 1)                 params.set('zoom', String(Math.round(zoom * 100) / 100));
-    if (rowScale !== 2)             params.set('scale', String(rowScale));
+    if (rowScale !== 1)             params.set('scale', String(rowScale));
     if (colorBy !== 'topic')        params.set('colorby', colorBy);
 
     const qs = params.toString();
