@@ -1,6 +1,6 @@
 import type { Book } from '../types';
 import { BookTooltip } from './BookTooltip';
-import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import { TOPIC_COLORS, FORMAT_COLORS, SOURCE_PALETTE, RATING_COLORS } from '../colors';
 
 interface Props {
@@ -122,42 +122,55 @@ export function GanttChart({ books, selectedYear, zoom, onZoomChange, rowScale, 
     setTooltipPos({ x: e.clientX, y: e.clientY });
   };
 
-  // Pinch / Ctrl+scroll zoom
-  const handleWheel = useCallback((e: WheelEvent) => {
-    if (e.ctrlKey || e.metaKey) {
-      e.preventDefault();
-      const factor = e.deltaY < 0 ? 1.1 : 0.9;
-      onZoomChange(Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom * factor)));
-    }
-  }, [zoom, onZoomChange]);
+  // Keep refs for zoom/callback so event listeners don't go stale
+  const zoomRef = useRef(zoom);
+  const onZoomChangeRef = useRef(onZoomChange);
+  useEffect(() => { zoomRef.current = zoom; }, [zoom]);
+  useEffect(() => { onZoomChangeRef.current = onZoomChange; }, [onZoomChange]);
 
+  const pinchDist = (t: TouchList) =>
+    Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+
+  // All zoom gestures via native listeners so we can call preventDefault()
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    el.addEventListener('wheel', handleWheel, { passive: false });
-    return () => el.removeEventListener('wheel', handleWheel);
-  }, [handleWheel]);
 
-  const getPinchDist = (touches: React.TouchList) =>
-    Math.hypot(
-      touches[0].clientX - touches[1].clientX,
-      touches[0].clientY - touches[1].clientY
-    );
+    const onWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        const factor = e.deltaY < 0 ? 1.1 : 0.9;
+        onZoomChangeRef.current(Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoomRef.current * factor)));
+      }
+    };
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (e.touches.length === 2) lastPinchDist.current = getPinchDist(e.touches);
-  };
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) lastPinchDist.current = pinchDist(e.touches);
+    };
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (e.touches.length === 2 && lastPinchDist.current !== null) {
-      const dist = getPinchDist(e.touches);
-      const delta = dist / lastPinchDist.current;
-      onZoomChange(Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom * delta)));
-      lastPinchDist.current = dist;
-    }
-  };
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 2 && lastPinchDist.current !== null) {
+        e.preventDefault(); // block browser page-zoom
+        const dist = pinchDist(e.touches);
+        const delta = dist / lastPinchDist.current;
+        onZoomChangeRef.current(Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoomRef.current * delta)));
+        lastPinchDist.current = dist;
+      }
+    };
 
-  const handleTouchEnd = () => { lastPinchDist.current = null; };
+    const onTouchEnd = () => { lastPinchDist.current = null; };
+
+    el.addEventListener('wheel',      onWheel,      { passive: false });
+    el.addEventListener('touchstart', onTouchStart, { passive: true  });
+    el.addEventListener('touchmove',  onTouchMove,  { passive: false }); // passive:false required for preventDefault
+    el.addEventListener('touchend',   onTouchEnd);
+    return () => {
+      el.removeEventListener('wheel',      onWheel);
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchmove',  onTouchMove);
+      el.removeEventListener('touchend',   onTouchEnd);
+    };
+  }, []); // runs once; uses refs for current values
 
   return (
     <div>
@@ -214,11 +227,8 @@ export function GanttChart({ books, selectedYear, zoom, onZoomChange, rowScale, 
       <div
         ref={containerRef}
         className="relative overflow-x-auto overflow-y-auto bg-[var(--bg-secondary)] rounded-xl border border-[var(--border)]"
-        style={{ maxHeight: '75vh' }}
+        style={{ maxHeight: '75vh', touchAction: 'pan-x pan-y' }}
         onMouseMove={handleMouseMove}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
       >
         {/* Month headers — sticky so always visible while scrolling down */}
         <div className="sticky top-0 z-10 flex bg-[var(--bg-secondary)] border-b border-[var(--border)]" style={{ minWidth: `${chartWidth}px` }}>
